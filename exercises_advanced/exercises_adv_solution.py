@@ -50,19 +50,21 @@ print("Check prediction (3 x 8): ", x[idx0,idx1,idx2].shape)
 
 
 #### e. *Very Advanced* Construct an array:
+'''
+x = np.arange(12, dtype=np.int32).reshape((3, 4))
+'''
 
-`x = np.arange(12, dtype=np.int32).reshape((3, 4))`
-so that x is
+#so that x is
 
-```
+'''
 array([[ 0,  1,  2,  3],
        [ 4,  5,  6,  7],
        [ 8,  9, 10, 11]])
-```
+'''
 
-Now, provide to `np.lib.stride_tricks.as_strided` the strides necessary to view a sliding 2x2 window over this array. The output should be
+#Now, provide to `np.lib.stride_tricks.as_strided` the strides necessary to view a sliding 2x2 window over this array. The output should be
 
-```
+'''
 array([[[[ 0,  1],
          [ 4,  5]],
 
@@ -81,13 +83,35 @@ array([[[[ 0,  1],
 
         [[ 6,  7],
          [10, 11]]]], dtype=int32)
-```
+'''
 
-The code is of the form
+#The code is of the form
 
-```
+'''
 z = as_strided(x, shape=(2, 3, 2, 2),
                   strides=(..., ..., ..., ...))
-```
+'''
 
-This sort of stride manipulation is handy for implementing techniques such as region based statistics, convolutions, etc.
+#This sort of stride manipulation is handy for implementing techniques such as region based statistics, convolutions, etc.
+
+# Solution:
+
+x = np.arange(12, dtype=np.int32).reshape((3, 4))
+
+# The np.int32 datatype takes 4 bytes per entry
+# So the strides of x, in row-major ordering, should be 
+# 4 x (ncols, 1) = (4 x 4, 4) = (16, 4)
+xstrides = x.strides
+print(xstrides)
+
+# For a (2 x 3 x 2 x 2) array with np.int32 datatype
+# The strides, in row-major ordering, should be
+# 4 x (n1 x n2 x n3, n2 x n3, n3, 1) = 4 x (12, 4, 2, 1) = (48, 16, 8, 4)
+print(np.empty((2,3,2,2), dtype=np.int32).strides)
+
+# In order to view a gliding 2x2 window we need to add multiples of the stride entries
+#strides = [(n * xstrides[0], m * xstrides[1]) for (m,n), _ in np.ndenumerate(x)]
+
+strides = (48, 4, 16, 4)
+
+z = np.lib.stride_tricks.as_strided(x, shape=(2, 3, 2, 2), strides=strides)
